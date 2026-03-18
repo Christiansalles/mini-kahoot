@@ -48,3 +48,22 @@ def calcular_resultado(nome, questoes, respostas):
         "\n================\n"
     )
     return resultado
+
+
+def criar_servidor(host=HOST, port=PORT):
+    """Cria e configura o socket TCP do servidor."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((host, port))
+    server.listen(1)
+    print(f"[*] Servidor aguardando conexão na porta {port}...")
+    return server
+
+
+def aceitar_conexao(server_socket):
+    """Aceita uma conexão e retorna (conn, nome_do_jogador)."""
+    conn, addr = server_socket.accept()
+    print(f"[+] Conexão recebida de {addr}")
+    nome = conn.recv(1024).decode().strip()
+    print(f"[+] Jogador conectado: {nome}")
+    return conn, nome

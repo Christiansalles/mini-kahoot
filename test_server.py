@@ -1,6 +1,7 @@
-"""Testes unitários — Fase 1: lógica pura (dados + formatação + resultado)."""
+"""Testes unitários — Fases 1 e 2: lógica pura + infraestrutura TCP."""
 
-from server import QUESTOES, formatar_questao, calcular_resultado
+from unittest.mock import patch, MagicMock
+from server import QUESTOES, formatar_questao, calcular_resultado, criar_servidor, aceitar_conexao
 
 
 # ---------- Estrutura de dados ----------
@@ -64,3 +65,44 @@ def test_calcular_resultado_formato_bloco():
     resultado = calcular_resultado("Test", QUESTOES, respostas)
     assert "=== RESULTADO ===" in resultado
     assert "================" in resultado
+
+
+# ---------- criar_servidor (mock) ----------
+
+@patch("server.socket.socket")
+def test_criar_servidor_configura_socket(mock_socket_cls):
+    mock_sock = MagicMock()
+    mock_socket_cls.return_value = mock_sock
+
+    resultado = criar_servidor("0.0.0.0", 5000)
+
+    # Verifica que criou socket TCP
+    import socket as _socket
+    mock_socket_cls.assert_called_once_with(_socket.AF_INET, _socket.SOCK_STREAM)
+
+    # Verifica SO_REUSEADDR
+    mock_sock.setsockopt.assert_called_once_with(
+        _socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1
+    )
+
+    # Verifica bind e listen
+    mock_sock.bind.assert_called_once_with(("0.0.0.0", 5000))
+    mock_sock.listen.assert_called_once_with(1)
+
+    assert resultado is mock_sock
+
+
+# ---------- aceitar_conexao (mock) ----------
+
+def test_aceitar_conexao_retorna_nome():
+    mock_server = MagicMock()
+    mock_conn = MagicMock()
+    mock_server.accept.return_value = (mock_conn, ("127.0.0.1", 12345))
+    mock_conn.recv.return_value = b"  Joao  \n"
+
+    conn, nome = aceitar_conexao(mock_server)
+
+    assert conn is mock_conn
+    assert nome == "Joao"
+    mock_conn.recv.assert_called_once_with(1024)
+
