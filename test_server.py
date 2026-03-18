@@ -1,7 +1,8 @@
-"""Testes unitários — Fases 1 e 2: lógica pura + infraestrutura TCP."""
+"""Testes unitários — Fases 1, 2 e 3: lógica pura + infra TCP + loop do quiz."""
 
 from unittest.mock import patch, MagicMock
-from server import QUESTOES, formatar_questao, calcular_resultado, criar_servidor, aceitar_conexao
+from server import (QUESTOES, formatar_questao, calcular_resultado,
+                    criar_servidor, aceitar_conexao, executar_quiz)
 
 
 # ---------- Estrutura de dados ----------
@@ -105,4 +106,34 @@ def test_aceitar_conexao_retorna_nome():
     assert conn is mock_conn
     assert nome == "Joao"
     mock_conn.recv.assert_called_once_with(1024)
+
+
+# ---------- executar_quiz (mock) ----------
+
+def test_executar_quiz_todas_corretas():
+    mock_conn = MagicMock()
+    # Simula respostas corretas: B, C, D
+    mock_conn.recv.side_effect = [b"B\n", b"C\n", b"D\n"]
+
+    executar_quiz(mock_conn, "Alice", QUESTOES)
+
+    # 3 questões + 1 resultado = 4 chamadas a sendall
+    assert mock_conn.sendall.call_count == 4
+    # 3 chamadas a recv (uma por questão)
+    assert mock_conn.recv.call_count == 3
+
+    # O último sendall deve conter o resultado com 3/3
+    ultimo_envio = mock_conn.sendall.call_args_list[-1][0][0].decode()
+    assert "Acertos: 3/3" in ultimo_envio
+
+
+def test_executar_quiz_respostas_erradas():
+    mock_conn = MagicMock()
+    # Simula respostas todas erradas
+    mock_conn.recv.side_effect = [b"A\n", b"A\n", b"A\n"]
+
+    executar_quiz(mock_conn, "Bob", QUESTOES)
+
+    ultimo_envio = mock_conn.sendall.call_args_list[-1][0][0].decode()
+    assert "Acertos: 0/3" in ultimo_envio
 

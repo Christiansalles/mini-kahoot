@@ -67,3 +67,30 @@ def aceitar_conexao(server_socket):
     nome = conn.recv(1024).decode().strip()
     print(f"[+] Jogador conectado: {nome}")
     return conn, nome
+
+
+def executar_quiz(conn, nome, questoes):
+    """Envia questões, recebe respostas, calcula e envia resultado."""
+    respostas_usuario = []
+
+    for q in questoes:
+        mensagem = formatar_questao(q)
+        conn.sendall(mensagem.encode())
+
+        resposta = conn.recv(1024).decode().strip().upper()
+        respostas_usuario.append(resposta)
+        print(f"[>] {nome} respondeu: {resposta}")
+
+    resultado = calcular_resultado(nome, questoes, respostas_usuario)
+    conn.sendall(resultado.encode())
+    print(f"[*] Resultado enviado para {nome}. Encerrando conexão.")
+
+
+if __name__ == "__main__":
+    server = criar_servidor()
+    try:
+        conn, nome = aceitar_conexao(server)
+        executar_quiz(conn, nome, QUESTOES)
+        conn.close()
+    finally:
+        server.close()
