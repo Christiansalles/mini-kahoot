@@ -40,3 +40,17 @@ def enviar_nome(sock, nome):
     """
     nome_limpo = nome.strip()
     sock.sendall(nome_limpo.encode())
+
+
+def validar_resposta(resposta):
+    """Valida se a resposta é uma das alternativas aceitas (A, B, C ou D).
+
+    A entrada é case-insensitive e espaços são ignorados.
+
+    Args:
+        resposta: String digitada pelo jogador.
+
+    Returns:
+        True se a resposta (após strip/upper) for A, B, C ou D.
+    """
+    return resposta.strip().upper() in ("A", "B", "C", "D")

@@ -7,7 +7,7 @@ Cada fase de implementação adiciona novos testes neste arquivo.
 import socket
 import threading
 
-from client import criar_conexao, enviar_nome
+from client import criar_conexao, enviar_nome, validar_resposta
 
 
 # ======================== Fase 1 — Conexão TCP ========================
@@ -98,3 +98,29 @@ def test_enviar_nome_com_espacos():
     finally:
         s1.close()
         s2.close()
+
+
+# ================ Fase 3 — Validação de entrada (A/B/C/D) ================
+
+
+def test_validar_resposta_validas():
+    """Verifica que A, B, C, D (maiúsculas e minúsculas) são aceitas."""
+    assert validar_resposta("A") is True
+    assert validar_resposta("b") is True
+    assert validar_resposta("c") is True
+    assert validar_resposta("D") is True
+
+
+def test_validar_resposta_invalidas():
+    """Verifica que entradas fora de A/B/C/D são rejeitadas."""
+    assert validar_resposta("E") is False
+    assert validar_resposta("AB") is False
+    assert validar_resposta("") is False
+    assert validar_resposta("1") is False
+    assert validar_resposta("sim") is False
+
+
+def test_validar_resposta_com_espacos():
+    """Verifica que espaços ao redor da letra são ignorados."""
+    assert validar_resposta(" a ") is True
+    assert validar_resposta("  B  ") is True
