@@ -7,7 +7,7 @@ Cada fase de implementação adiciona novos testes neste arquivo.
 import socket
 import threading
 
-from client import criar_conexao
+from client import criar_conexao, enviar_nome
 
 
 # ======================== Fase 1 — Conexão TCP ========================
@@ -71,3 +71,30 @@ def test_criar_conexao_falha():
     # Porta que certamente não tem servidor escutando
     with pytest.raises((ConnectionRefusedError, OSError)):
         criar_conexao('localhost', 59999)
+
+
+# =================== Fase 2 — Envio do nome do jogador ===================
+
+
+def test_enviar_nome():
+    """Verifica que o nome é enviado corretamente via socket."""
+    s1, s2 = socket.socketpair()
+    try:
+        enviar_nome(s1, "João")
+        recebido = s2.recv(1024).decode()
+        assert recebido == "João"
+    finally:
+        s1.close()
+        s2.close()
+
+
+def test_enviar_nome_com_espacos():
+    """Verifica que espaços extras são removidos antes do envio."""
+    s1, s2 = socket.socketpair()
+    try:
+        enviar_nome(s1, "  Maria  ")
+        recebido = s2.recv(1024).decode()
+        assert recebido == "Maria"
+    finally:
+        s1.close()
+        s2.close()

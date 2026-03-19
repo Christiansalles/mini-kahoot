@@ -27,3 +27,16 @@ def criar_conexao(host=HOST, port=PORT):
     client.connect((host, port))
     print("[*] Conectado ao servidor!")
     return client
+
+
+def enviar_nome(sock, nome):
+    """Envia o nome do jogador ao servidor.
+
+    O nome é limpo (strip) antes de ser enviado.
+
+    Args:
+        sock: Socket TCP conectado ao servidor.
+        nome: Nome do jogador (string).
+    """
+    nome_limpo = nome.strip()
+    sock.sendall(nome_limpo.encode())
