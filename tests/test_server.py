@@ -1,5 +1,11 @@
 """Testes unitários — Fases 1, 2 e 3: lógica pura + infra TCP + loop do quiz."""
 
+import sys
+from pathlib import Path
+
+# Garante que o diretório raiz do projeto está no sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from unittest.mock import patch, MagicMock
 from server import (QUESTOES, formatar_questao, calcular_resultado,
                     criar_servidor, aceitar_conexao, executar_quiz)
@@ -136,4 +142,3 @@ def test_executar_quiz_respostas_erradas():
 
     ultimo_envio = mock_conn.sendall.call_args_list[-1][0][0].decode()
     assert "Acertos: 0/3" in ultimo_envio
-
