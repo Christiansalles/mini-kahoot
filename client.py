@@ -107,3 +107,51 @@ def processar_questoes(sock, input_fn=None, num_questoes=3):
             print("❌ Resposta inválida. Digite apenas A, B, C ou D:")
 
         enviar_resposta(sock, resposta)
+
+
+def receber_resultado(sock):
+    """Recebe o bloco de resultado final do servidor.
+
+    Args:
+        sock: Socket TCP conectado ao servidor.
+
+    Returns:
+        String com o bloco de resultado.
+    """
+    resultado = sock.recv(4096).decode()
+    return resultado
+
+
+def main(host=HOST, port=PORT, input_fn=None):
+    """Fluxo principal do cliente Mini Kahoot.
+
+    1. Conecta ao servidor.
+    2. Solicita e envia o nome do jogador.
+    3. Processa 3 questões (recebe, valida resposta, envia).
+    4. Recebe e exibe o resultado final.
+    5. Fecha a conexão.
+
+    Args:
+        host: Endereço do servidor.
+        port: Porta do servidor.
+        input_fn: Função de entrada (padrão: input builtin).
+    """
+    if input_fn is None:
+        input_fn = input
+
+    sock = criar_conexao(host, port)
+
+    try:
+        nome = input_fn("Digite seu nome: ").strip()
+        enviar_nome(sock, nome)
+
+        processar_questoes(sock, input_fn=lambda: input_fn(), num_questoes=3)
+
+        resultado = receber_resultado(sock)
+        print(resultado)
+    finally:
+        sock.close()
+
+
+if __name__ == "__main__":
+    main()

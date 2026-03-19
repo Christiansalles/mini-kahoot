@@ -14,6 +14,8 @@ from client import (
     receber_questao,
     enviar_resposta,
     processar_questoes,
+    receber_resultado,
+    main,
 )
 
 
@@ -213,3 +215,67 @@ def test_processar_questoes_com_retentativa():
         s_cliente.close()
         t.join(timeout=5)
         s_servidor.close()
+
+
+# ======== Fase 5 — Resultado final e encerramento ========
+
+
+def test_receber_resultado():
+    """Verifica que receber_resultado() retorna o bloco de resultado."""
+    s1, s2 = socket.socketpair()
+    bloco = (
+        "\n=== RESULTADO ==="
+        "\nJogador: Teste"
+        "\nAcertos: 3/3"
+        "\n================"
+        "\n"
+    )
+    try:
+        s1.sendall(bloco.encode())
+        resultado = receber_resultado(s2)
+        assert "RESULTADO" in resultado
+        assert "Jogador: Teste" in resultado
+        assert "Acertos: 3/3" in resultado
+    finally:
+        s1.close()
+        s2.close()
+
+
+def test_socket_fechado_apos_main():
+    """Verifica que o socket é fechado após main() completar."""
+    # Sobe servidor fake em thread
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(('localhost', 0))
+    port = srv.getsockname()[1]
+    srv.listen(1)
+
+    def fake_server():
+        conn, _ = srv.accept()
+        # Recebe nome
+        conn.recv(1024)
+        # Envia 3 questões e recebe respostas
+        for i in range(1, 4):
+            conn.sendall(
+                f"Q{i}. Pergunta?\nA) X  B) Y  C) Z  D) W\nSua resposta: ".encode()
+            )
+            conn.recv(1024)
+        # Envia resultado
+        conn.sendall(
+            b"\n=== RESULTADO ===\nJogador: Teste\nAcertos: 3/3\n================\n"
+        )
+        conn.close()
+
+    t = threading.Thread(target=fake_server)
+    t.start()
+
+    # Simula inputs: nome + 3 respostas
+    entradas = iter(["Teste", "A", "B", "C"])
+
+    def fake_input(prompt=""):
+        return next(entradas)
+
+    main(host='localhost', port=port, input_fn=fake_input)
+
+    t.join(timeout=5)
+    srv.close()
